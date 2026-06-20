@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Battle Plan</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#0B0E14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E14; --surface:#131822; --surface-2:#1A2030; --line:#262E40;
+    --text:#EDEFF4; --muted:#8B94A7;
+    --exercise:#3DDC97; --automation:#4FB8FF; --trading:#FF8A3D;
+    --critical:#FF5C5C; --work:#7C8CF8; --bpsc:#C792EA; --misc:#5B6478;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--text);}
+  body{
+    font-family:'Inter',sans-serif; padding:20px 16px 48px; max-width:560px; margin:0 auto;
+    padding-top:max(20px, env(safe-area-inset-top)); padding-bottom:max(48px, env(safe-area-inset-bottom));
+  }
+  .eyebrow{font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.18em; color:var(--muted); text-transform:uppercase;}
+  h1{font-family:'Space Grotesk', sans-serif; font-size:26px; font-weight:700; margin:4px 0 2px; letter-spacing:-0.01em;}
+  .sub{color:var(--muted); font-size:13px; margin-bottom:18px;}
+
+  .daybar-wrap{margin:18px 0 12px;}
+  .daybar{position:relative; height:34px; border-radius:8px; overflow:hidden; display:flex; border:1px solid var(--line);}
+  .daybar .seg{height:100%;}
+  .now-line{position:absolute; top:-4px; bottom:-4px; width:2px; background:#fff; box-shadow:0 0 8px rgba(255,255,255,0.8);}
+  .now-line::before{content:''; position:absolute; top:-5px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid #fff;}
+  .daybar-labels{display:flex; justify-content:space-between; font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-top:6px;}
+
+  .now-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; position:relative; overflow:hidden;}
+  .now-card.critical{border-color:var(--critical); animation:pulse 2.2s ease-in-out infinite;}
+  @media (prefers-reduced-motion: reduce){ .now-card.critical{animation:none;} }
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,92,92,0.0);} 50%{box-shadow:0 0 0 6px rgba(255,92,92,0.08);}}
+  .now-card .tag{font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted);}
+  .now-card .label{font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:700; margin:6px 0 10px; display:flex; align-items:center; gap:10px;}
+  .now-progress{height:6px; border-radius:4px; background:var(--surface-2); overflow:hidden; margin-bottom:8px;}
+  .now-progress .fill{height:100%; border-radius:4px;}
+  .now-meta{display:flex; justify-content:space-between; font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--muted);}
+  .next-up{font-size:12px; color:var(--muted); margin-top:10px; border-top:1px solid var(--line); padding-top:10px;}
+  .next-up b{color:var(--text);}
+
+  .toggle-row{display:flex; gap:8px; margin-bottom:10px;}
+  .toggle-btn{flex:1; background:var(--surface); border:1px solid var(--line); color:var(--muted); padding:10px; border-radius:10px; font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;}
+  .toggle-btn.active{background:var(--surface-2); color:var(--text); border-color:#3A4358;}
+
+  .edit-link-row{display:flex; justify-content:flex-end; margin-bottom:16px;}
+
+  .timeline{display:flex; flex-direction:column; gap:6px; margin-bottom:20px;}
+  .row{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 14px;}
+  .row.active{border-color:#3A4358; background:var(--surface-2);}
+  .row.crit{border-left:3px solid var(--critical);}
+  .row .icon{font-size:18px; width:24px; text-align:center;}
+  .row .bar{width:4px; align-self:stretch; border-radius:3px;}
+  .row .info{flex:1; min-width:0;}
+  .row .info .t{font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);}
+  .row .info .l{font-size:14px; font-weight:500; margin-top:1px;}
+  .row .donechip{font-size:10px; font-family:'JetBrains Mono', monospace; color:var(--exercise); border:1px solid var(--exercise); border-radius:6px; padding:3px 6px;}
+
+  .section-title{font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:700; margin:24px 0 10px;}
+  .checklist{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;}
+  .chk{flex:1 1 calc(50% - 8px); background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:13px;}
+  .chk .box{width:18px; height:18px; border-radius:5px; border:1.5px solid var(--muted); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px;}
+  .chk.on{border-color:currentColor;}
+  .chk.on .box{background:currentColor; border-color:currentColor; color:var(--bg);}
+
+  .streak-row{display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-top:10px;}
+  .streak-num{font-family:'Space Grotesk', sans-serif; font-size:20px; font-weight:700;}
+  .dots{display:flex; gap:5px; margin-left:auto;}
+  .dot{width:10px; height:10px; border-radius:50%; background:var(--surface-2); border:1px solid var(--line);}
+
+  .alert-card{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; font-size:12px; color:var(--muted); margin-top:18px;}
+  .alert-card .row1{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .btn{background:var(--surface-2); color:var(--text); border:1px solid var(--line); padding:8px 12px; border-radius:8px; font-size:12px; cursor:pointer; white-space:nowrap;}
+  .btn.small{padding:6px 10px; font-size:11px;}
+  .btn.primary{background:var(--automation); color:#06141F; border-color:var(--automation); font-weight:600;}
+  .btn.danger{background:transparent; color:var(--critical); border-color:var(--critical);}
+  .footnote{font-size:11px; color:var(--muted); margin-top:10px; line-height:1.5;}
+
+  /* Edit panel */
+  #editPanel{display:none; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:20px;}
+  .edit-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .edit-head .title{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15px;}
+  .edit-type-row{display:flex; gap:8px; margin-bottom:14px;}
+  .edit-row{display:grid; grid-template-columns:78px 78px 1fr 32px; gap:6px; align-items:center; margin-bottom:8px;}
+  .edit-row input[type="time"], .edit-row input[type="text"]{
+    background:var(--surface-2); border:1px solid var(--line); color:var(--text);
+    border-radius:7px; padding:7px 6px; font-size:12px; font-family:'JetBrains Mono', monospace; width:100%;
+  }
+  .edit-row input[type="text"]{font-family:'Inter', sans-serif; font-size:13px;}
+  .edit-row select{
+    background:var(--surface-2); border:1px solid var(--line); color:var(--text); border-radius:7px; padding:6px; font-size:11px; width:100%; margin-top:4px;
+  }
+  .edit-row .del{background:none; border:none; color:var(--critical); font-size:18px; cursor:pointer;}
+  .edit-actions{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+  <div class="eyebrow" id="dateLine">— loading —</div>
+  <h1>Battle Plan</h1>
+  <div class="sub">High-alert mode. One schedule, four goals, zero excuses.</div>
+
+  <div class="daybar-wrap">
+    <div class="daybar" id="daybar"></div>
+    <div class="daybar-labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+  </div>
+
+  <div class="toggle-row">
+    <button class="toggle-btn" id="btnAuto" onclick="setMode('auto')">Today (auto)</button>
+    <button class="toggle-btn" id="btnWeekday" onclick="setMode('weekday')">Weekday</button>
+    <button class="toggle-btn" id="btnWeekend" onclick="setMode('weekend')">Weekend</button>
+  </div>
+  <div class="edit-link-row"><button class="btn small" onclick="openEdit()">✎ Edit schedule</button></div>
+
+  <div id="editPanel">
+    <div class="edit-head"><div class="title">Edit schedule</div><button class="btn small" onclick="closeEdit()">Close</button></div>
+    <div class="edit-type-row">
+      <button class="toggle-btn active" id="editTypeWeekday" onclick="switchEditType('weekday')">Weekday</button>
+      <button class="toggle-btn" id="editTypeWeekend" onclick="switchEditType('weekend')">Weekend</button>
+    </div>
+    <div id="editRows"></div>
+    <div class="edit-actions">
+      <button class="btn" onclick="addDraftRow()">+ Add block</button>
+      <button class="btn primary" onclick="saveDraft()">Save changes</button>
+      <button class="btn danger" onclick="resetDraft()">Reset to default</button>
+    </div>
+  </div>
+
+  <div id="nowCard" class="now-card">
+    <div class="tag">Right now</div>
+    <div class="label" id="nowLabel">—</div>
+    <div class="now-progress"><div class="fill" id="nowFill"></div></div>
+    <div class="now-meta"><span id="nowElapsed">—</span><span id="nowRemain">—</span></div>
+    <div class="next-up" id="nextUp">—</div>
+  </div>
+
+  <div class="timeline" id="timeline"></div>
+
+  <div class="section-title">Today's checklist</div>
+  <div class="checklist" id="checklist"></div>
+  <div class="streak-row">
+    <div><div class="streak-num" id="streakNum">0</div><div style="font-size:11px;color:var(--muted)">day streak</div></div>
+    <div class="dots" id="dots"></div>
+  </div>
+
+  <div class="alert-card">
+    <div class="row1">
+      <span id="notifStatus">Alerts: not enabled</span>
+      <button class="btn small" id="notifBtn" onclick="enableNotifs()">Enable</button>
+    </div>
+    <div class="footnote">
+      Alerts fire while this app is open or recently backgrounded. Android may still suspend timers if it's closed for a while — that's a platform limit on web apps generally, not specific to this one. Your 5 critical transitions also have real phone alarms set as backup.
+    </div>
+  </div>
+
+<script>
+const CATS = {
+  exercise:{color:'var(--exercise)'}, automation:{color:'var(--automation)'}, trading:{color:'var(--trading)'},
+  critical:{color:'var(--critical)'}, work:{color:'var(--work)'}, bpsc:{color:'var(--bpsc)'}, misc:{color:'var(--misc)'}
+};
+const CAT_LIST = ['exercise','automation','trading','critical','work','bpsc','misc'];
+
+const DEFAULT_WEEKDAY = [
+  {s:'05:45',e:'06:30',l:'Exercise',i:'🏃',cat:'exercise'},
+  {s:'06:30',e:'07:00',l:'Breakfast & freshen up',i:'🍳',cat:'misc'},
+  {s:'07:00',e:'09:00',l:'Automation learning',i:'⚙️',cat:'automation'},
+  {s:'09:00',e:'09:15',l:'Market prep / watchlist',i:'📋',cat:'trading'},
+  {s:'09:15',e:'12:15',l:'Trading window — full focus',i:'📈',cat:'trading'},
+  {s:'12:15',e:'12:30',l:'Close trades, set SL/targets',i:'⛔',cat:'critical'},
+  {s:'12:30',e:'16:00',l:'WFH — team guidance + monitoring',i:'👥',cat:'work'},
+  {s:'16:00',e:'16:30',l:'Commute to office',i:'🚗',cat:'misc'},
+  {s:'16:30',e:'22:00',l:'Office work',i:'🏢',cat:'work'},
+  {s:'22:00',e:'22:30',l:'Dinner',i:'🍽️',cat:'misc'},
+  {s:'22:30',e:'23:00',l:'BPSC reading',i:'📚',cat:'bpsc'},
+  {s:'23:00',e:'05:45',l:'Sleep',i:'😴',cat:'misc'}
+];
+const DEFAULT_WEEKEND = [
+  {s:'06:30',e:'08:00',l:'Long workout + meal prep',i:'🏋️',cat:'exercise'},
+  {s:'08:00',e:'09:00',l:'Breakfast / free time',i:'🍳',cat:'misc'},
+  {s:'09:00',e:'13:00',l:'Trading: backtest + Pine Script',i:'📊',cat:'trading'},
+  {s:'13:00',e:'14:00',l:'Lunch',i:'🍱',cat:'misc'},
+  {s:'14:00',e:'17:00',l:'Automation project work',i:'⚙️',cat:'automation'},
+  {s:'17:00',e:'19:00',l:'BPSC mock test / deep reading',i:'📚',cat:'bpsc'},
+  {s:'19:00',e:'21:00',l:'Free time / family',i:'🌆',cat:'misc'},
+  {s:'21:00',e:'23:00',l:'Plan week ahead, light review',i:'🗓️',cat:'misc'},
+  {s:'23:00',e:'06:30',l:'Sleep',i:'😴',cat:'misc'}
+];
+const CHECK_ITEMS = [
+  {key:'exercise', label:'Exercised', color:'var(--exercise)'},
+  {key:'automation', label:'Automation block done', color:'var(--automation)'},
+  {key:'trading', label:'Stopped trading on time', color:'var(--trading)'},
+  {key:'bpsc', label:'BPSC reading done', color:'var(--bpsc)'}
+];
+
+let mode='auto';
+let scheduleWeekday, scheduleWeekend;
+let dailyLog={entries:{}};
+let notifTimers=[];
+let draftType='weekday', draftArr=[];
+
+function toMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+function fmtTime(d){ return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}); }
+function todayKey(d){ return d.toISOString().slice(0,10); }
+function isWeekend(d){ const day=d.getDay(); return day===0||day===6; }
+function activeSchedule(){
+  const now=new Date();
+  if(mode==='weekday') return scheduleWeekday;
+  if(mode==='weekend') return scheduleWeekend;
+  return isWeekend(now) ? scheduleWeekend : scheduleWeekday;
+}
+function isAutoToday(){ return mode==='auto'; }
+
+function loadSchedules(){
+  try{ const w=localStorage.getItem('schedule_weekday'); scheduleWeekday = w?JSON.parse(w):JSON.parse(JSON.stringify(DEFAULT_WEEKDAY)); }catch(e){ scheduleWeekday=JSON.parse(JSON.stringify(DEFAULT_WEEKDAY)); }
+  try{ const we=localStorage.getItem('schedule_weekend'); scheduleWeekend = we?JSON.parse(we):JSON.parse(JSON.stringify(DEFAULT_WEEKEND)); }catch(e){ scheduleWeekend=JSON.parse(JSON.stringify(DEFAULT_WEEKEND)); }
+}
+function saveSchedules(){
+  localStorage.setItem('schedule_weekday', JSON.stringify(scheduleWeekday));
+  localStorage.setItem('schedule_weekend', JSON.stringify(scheduleWeekend));
+}
+
+function findCurrentIndex(sched, nowMin){
+  for(let i=0;i<sched.length;i++){
+    const s=toMin(sched[i].s), e=toMin(sched[i].e);
+    if(s<e){ if(nowMin>=s && nowMin<e) return i; } else { if(nowMin>=s || nowMin<e) return i; }
+  }
+  return -1;
+}
+
+function renderDaybar(sched, nowMin){
+  const bar=document.getElementById('daybar'); bar.innerHTML='';
+  sched.forEach(b=>{
+    let s=toMin(b.s), e=toMin(b.e); if(e<s) e+=1440;
+    const seg=document.createElement('div');
+    seg.className='seg'; seg.style.width=((e-s)/1440*100)+'%';
+    seg.style.background=getComputedStyle(document.documentElement).getPropertyValue('--'+b.cat) || '#5B6478';
+    seg.style.opacity = b.cat==='misc' ? '0.35':'0.85';
+    bar.appendChild(seg);
+  });
+  if(nowMin>=0){
+    const line=document.createElement('div'); line.className='now-line'; line.style.left=(nowMin/1440*100)+'%';
+    bar.appendChild(line);
+  }
+}
+
+function renderNowCard(sched, nowMin, idx){
+  const card=document.getElementById('nowCard'), lbl=document.getElementById('nowLabel'), fill=document.getElementById('nowFill');
+  const elapsed=document.getElementById('nowElapsed'), remain=document.getElementById('nowRemain'), nextUp=document.getElementById('nextUp');
+  if(idx===-1){
+    lbl.textContent='Off schedule'; card.classList.remove('critical'); fill.style.width='0%';
+    elapsed.textContent=''; remain.textContent=''; nextUp.textContent=''; return;
+  }
+  const b=sched[idx]; let s=toMin(b.s), e=toMin(b.e), n=nowMin;
+  if(e<s){ e+=1440; if(n<s) n+=1440; }
+  const pct=Math.max(0,Math.min(100,(n-s)/(e-s)*100));
+  lbl.innerHTML=b.i+' '+b.l; fill.style.width=pct+'%';
+  fill.style.background=getComputedStyle(document.documentElement).getPropertyValue('--'+b.cat);
+  elapsed.textContent=b.s+' start'; remain.textContent=Math.max(0,Math.round(e-n))+' min left';
+  card.classList.toggle('critical', b.cat==='critical' && isAutoToday());
+  const nb=sched[(idx+1)%sched.length];
+  nextUp.innerHTML='Next: <b>'+nb.i+' '+nb.l+'</b> at '+nb.s;
+}
+
+function renderTimeline(sched, idx){
+  const tl=document.getElementById('timeline'); tl.innerHTML='';
+  sched.forEach((b,i)=>{
+    const row=document.createElement('div');
+    row.className='row'+(i===idx && isAutoToday() ? ' active':'')+(b.cat==='critical' ? ' crit':'');
+    row.innerHTML=`<div class="bar" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--'+b.cat)}"></div>
+      <div class="icon">${b.i}</div>
+      <div class="info"><div class="t">${b.s} – ${b.e}</div><div class="l">${b.l}</div></div>
+      ${i===idx && isAutoToday() ? '<div class="donechip">NOW</div>' : ''}`;
+    tl.appendChild(row);
+  });
+}
+
+function renderChecklist(){
+  const wrap=document.getElementById('checklist'); wrap.innerHTML='';
+  const key=todayKey(new Date()); const today=dailyLog.entries[key]||{};
+  CHECK_ITEMS.forEach(item=>{
+    const on=!!today[item.key]; const el=document.createElement('div');
+    el.className='chk'+(on?' on':''); el.style.color=item.color;
+    el.innerHTML=`<div class="box">${on?'✓':''}</div><span style="color:${on?'var(--text)':'var(--muted)'}">${item.label}</span>`;
+    el.onclick=()=>toggleCheck(item.key); wrap.appendChild(el);
+  });
+}
+function toggleCheck(key){
+  const k=todayKey(new Date()); if(!dailyLog.entries[k]) dailyLog.entries[k]={};
+  dailyLog.entries[k][key]=!dailyLog.entries[k][key]; saveLog(); renderChecklist(); renderStreak();
+}
+function renderStreak(){
+  const dotsEl=document.getElementById('dots'); dotsEl.innerHTML='';
+  const d=new Date(); const dayResults=[];
+  for(let i=6;i>=0;i--){ const dd=new Date(d); dd.setDate(d.getDate()-i); const k=todayKey(dd);
+    const e=dailyLog.entries[k]||{}; dayResults.push(CHECK_ITEMS.filter(c=>e[c.key]).length); }
+  let streak=0, counting=true;
+  for(let i=dayResults.length-1;i>=0;i--){ if(counting){ if(dayResults[i]===CHECK_ITEMS.length) streak++; else counting=false; } }
+  document.getElementById('streakNum').textContent=streak;
+  dayResults.forEach(c=>{ const dot=document.createElement('div'); dot.className='dot';
+    if(c===CHECK_ITEMS.length) dot.style.background='var(--exercise)'; else if(c>0) dot.style.background='var(--trading)';
+    dotsEl.appendChild(dot); });
+}
+function saveLog(){ localStorage.setItem('abhi-routine-log', JSON.stringify(dailyLog)); }
+function loadLog(){ try{ const raw=localStorage.getItem('abhi-routine-log'); dailyLog=raw?JSON.parse(raw):{entries:{}}; }catch(e){ dailyLog={entries:{}}; } }
+
+function setMode(m){
+  mode=m;
+  document.getElementById('btnAuto').classList.toggle('active', m==='auto');
+  document.getElementById('btnWeekday').classList.toggle('active', m==='weekday');
+  document.getElementById('btnWeekend').classList.toggle('active', m==='weekend');
+  tick();
+}
+function tick(){
+  const now=new Date();
+  document.getElementById('dateLine').textContent=now.toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'})+' · '+fmtTime(now);
+  const sched=activeSchedule(); const nowMin=now.getHours()*60+now.getMinutes();
+  const idx=isAutoToday() ? findCurrentIndex(sched, nowMin) : -1;
+  renderDaybar(sched, isAutoToday()?nowMin:-1);
+  renderNowCard(sched, nowMin, idx);
+  renderTimeline(sched, idx);
+}
+
+/* ---- Edit panel ---- */
+function openEdit(){
+  document.getElementById('editPanel').style.display='block';
+  switchEditType(mode==='weekend' ? 'weekend':'weekday');
+}
+function closeEdit(){ document.getElementById('editPanel').style.display='none'; }
+function switchEditType(type){
+  draftType=type;
+  document.getElementById('editTypeWeekday').classList.toggle('active', type==='weekday');
+  document.getElementById('editTypeWeekend').classList.toggle('active', type==='weekend');
+  draftArr=JSON.parse(JSON.stringify(type==='weekday'?scheduleWeekday:scheduleWeekend));
+  renderEditRows();
+}
+function renderEditRows(){
+  const wrap=document.getElementById('editRows'); wrap.innerHTML='';
+  draftArr.forEach((b,i)=>{
+    const row=document.createElement('div'); row.className='edit-row';
+    row.innerHTML=`
+      <input type="time" value="${b.s}" onchange="updateDraft(${i},'s',this.value)">
+      <input type="time" value="${b.e}" onchange="updateDraft(${i},'e',this.value)">
+      <div>
+        <input type="text" value="${b.l.replace(/"/g,'&quot;')}" onchange="updateDraft(${i},'l',this.value)" placeholder="Block name">
+        <select onchange="updateDraft(${i},'cat',this.value)">
+          ${CAT_LIST.map(c=>`<option value="${c}" ${c===b.cat?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <button class="del" onclick="removeDraftRow(${i})">×</button>`;
+    wrap.appendChild(row);
+  });
+}
+function updateDraft(i, field, val){ draftArr[i][field]=val; }
+function removeDraftRow(i){ draftArr.splice(i,1); renderEditRows(); }
+function addDraftRow(){ draftArr.push({s:'09:00',e:'10:00',l:'New block',i:'•',cat:'misc'}); renderEditRows(); }
+function saveDraft(){
+  draftArr.sort((a,b)=>toMin(a.s)-toMin(b.s));
+  if(draftType==='weekday') scheduleWeekday=draftArr; else scheduleWeekend=draftArr;
+  saveSchedules(); closeEdit(); tick();
+  if(Notification && Notification.permission==='granted') scheduleNotifs();
+}
+function resetDraft(){
+  if(!confirm('Reset '+draftType+' schedule to default? This discards your edits.')) return;
+  draftArr = JSON.parse(JSON.stringify(draftType==='weekday'?DEFAULT_WEEKDAY:DEFAULT_WEEKEND));
+  renderEditRows();
+}
+
+/* ---- Notifications ---- */
+let audioCtx;
+function beep(){
+  try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination); o.frequency.value=880; g.gain.value=0.08;
+    o.start(); o.stop(audioCtx.currentTime+0.18);
+  }catch(e){}
+}
+function clearNotifTimers(){ notifTimers.forEach(t=>clearTimeout(t)); notifTimers=[]; }
+function scheduleNotifs(){
+  clearNotifTimers();
+  if(Notification.permission!=='granted') return;
+  const sched=activeSchedule(); const now=new Date();
+  sched.forEach(b=>{
+    let s=toMin(b.s); const target=new Date(now); target.setHours(Math.floor(s/60), s%60, 0, 0);
+    if(target<=now) target.setDate(target.getDate()+1);
+    const ms=target-now;
+    if(ms>0 && ms<1000*60*60*20){
+      const tmr=setTimeout(()=>{ beep(); new Notification(b.i+' '+b.l, {body: b.cat==='critical' ? 'Job-protection window — wrap up now.' : 'Time to switch.'}); }, ms);
+      notifTimers.push(tmr);
+    }
+  });
+}
+async function enableNotifs(){
+  if(!('Notification' in window)){ document.getElementById('notifStatus').textContent='Not supported in this browser'; return; }
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){
+    document.getElementById('notifStatus').textContent='Alerts: enabled';
+    document.getElementById('notifBtn').textContent='Test';
+    document.getElementById('notifBtn').onclick=()=>{ beep(); new Notification('Test alert', {body:'This is what your alerts will look like.'}); };
+    scheduleNotifs();
+  } else { document.getElementById('notifStatus').textContent='Alerts: permission denied'; }
+}
+
+/* ---- init ---- */
+loadSchedules(); loadLog(); setMode('auto'); renderChecklist(); renderStreak();
+setInterval(tick, 30000);
+if('Notification' in window && Notification.permission==='granted'){
+  document.getElementById('notifStatus').textContent='Alerts: enabled';
+  document.getElementById('notifBtn').textContent='Test';
+  document.getElementById('notifBtn').onclick=()=>{ beep(); new Notification('Test alert', {body:'This is what your alerts will look like.'}); };
+  scheduleNotifs();
+}
+if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('service-worker.js').catch(()=>{}); }); }
+</script>
+</body>
+</html>
